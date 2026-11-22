@@ -11,7 +11,7 @@ portón de cochera por radiofrecuencia y registro de entradas en base de datos.
 
 | Módulo | Qué hace | Hardware | Estado |
 |---|---|---|---|
-| Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☐ |
+| Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
 | Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☐ |
 | Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☐ |
 | Cocina | Alerta (LED y buzzer) por temperatura alta o gas | DHT22, MQ2, LED, buzzer | ☐ |
