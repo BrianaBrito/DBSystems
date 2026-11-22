@@ -10,6 +10,8 @@
 #include <LittleFS.h>
 
 #include <ApiServer.h>
+#include <ArduinoJson.h>
+#include <BackendClient.h>
 #include <Buzzer.h>
 #include <GateModule.h>
 #include <Logger.h>
@@ -61,11 +63,30 @@ GateModuleConfig makeGateConfig() {
   return c;
 }
 
+BackendClientConfig makeBackendConfig() {
+  BackendClientConfig c;
+#ifdef BACKEND_URL
+  c.baseUrl = BACKEND_URL;
+#else
+  c.baseUrl = "";
+#endif
+  c.token = API_TOKEN;  // mismo secreto compartido que valida el backend
+  c.queueMax = cfg::BACKEND_QUEUE_MAX;
+  c.timeoutMs = cfg::BACKEND_TIMEOUT_MS;
+  c.retryMs = cfg::BACKEND_RETRY_MS;
+  return c;
+}
+
+// Identifica este arranque: el contador `seq` de la bitácora reinicia en cada reinicio,
+// y con boot_id el backend distingue "seq 1 de hoy" de "seq 1 de ayer".
+uint32_t bootId = 0;
+
 WifiManager wifi(makeWifiConfig());
 ApiServer api(cfg::HTTP_PORT, API_TOKEN, FW_NAME, FW_VERSION, wifi);
 StatusLed statusLed(pins::STATUS_LED);
 Buzzer buzzer(pins::BUZZER);
 GateModule gate(makeGateConfig(), buzzer);
+BackendClient backend(makeBackendConfig());
 
 }  // namespace
 
@@ -90,6 +111,21 @@ void setup() {
   ESP32PWM::allocateTimer(1);
 
   buzzer.begin();
+
+  bootId = esp_random();
+  backend.begin();
+  gate.setAccessListener([](const AccessEvent& e) {
+    JsonDocument doc;
+    doc["device"] = cfg::DEVICE_ID;
+    doc["boot"] = bootId;
+    doc["seq"] = e.seq;
+    doc["uptime_s"] = e.uptimeS;
+    doc["uid"] = e.uid;
+    doc["result"] = e.result;
+    String body;
+    serializeJson(doc, body);
+    backend.enqueue("/api/events.php", body);
+  });
 
   // Los módulos se registran y arrancan ANTES de api.begin().
   api.addModule(&gate);
