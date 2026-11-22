@@ -10,7 +10,7 @@
 #include <Arduino.h>
 
 #define FW_NAME "smart-home-esp32"
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.2.0"
 
 namespace cfg {
 constexpr uint32_t SERIAL_BAUD = 115200;
@@ -20,6 +20,25 @@ constexpr uint16_t HTTP_PORT = 80;
 constexpr uint8_t AP_CHANNEL = 1;  // el AP se moverá al canal del router al conectar la STA
 constexpr uint8_t AP_MAX_CLIENTS = 4;
 constexpr uint32_t STA_RECONNECT_INTERVAL_MS = 15000;
+
+// Caseta: servo y tiempos
+constexpr uint8_t GATE_CLOSED_DEG = 90;
+constexpr uint8_t GATE_OPEN_DEG = 180;
+constexpr uint32_t GATE_TRAVEL_MS = 900;          // lo que tarda la barra en moverse
+constexpr uint32_t GATE_WAIT_VEHICLE_MS = 10000;  // espera máxima a que pase el vehículo
+constexpr uint32_t GATE_CLEAR_DELAY_MS = 1500;    // tiempo libre antes de cerrar
+
+// Caseta: sensor ultrasónico (calibrar con docs/caseta.md)
+constexpr uint16_t GATE_DETECT_CM = 5;
+constexpr uint16_t GATE_RELEASE_MARGIN_CM = 5;  // histéresis: libre al superar detect + margen
+constexpr uint16_t SENSOR_MAX_CM = 60;
+constexpr uint8_t SENSOR_CONFIRM_READS = 2;
+constexpr uint32_t SENSOR_INTERVAL_MS = 100;
+
+// Caseta: RFID
+constexpr uint32_t RFID_POLL_MS = 100;
+constexpr uint32_t RFID_COOLDOWN_MS = 2000;
+constexpr uint32_t LEARN_MODE_MS = 20000;
 }  // namespace cfg
 
 namespace pins {
