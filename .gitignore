@@ -4,3 +4,6 @@
 .vscode/launch.json
 .vscode/ipch
 include/secrets.h
+# Backend: configuracion con el token y base de datos local
+backend/config.php
+backend/data/
