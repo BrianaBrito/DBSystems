@@ -21,15 +21,21 @@ constexpr uint8_t AP_CHANNEL = 1;  // el AP se moverá al canal del router al co
 constexpr uint8_t AP_MAX_CLIENTS = 4;
 constexpr uint32_t STA_RECONNECT_INTERVAL_MS = 15000;
 
+// Backend (PHP en la laptop)
+constexpr const char* DEVICE_ID = "casa-esp32";
+constexpr uint8_t BACKEND_QUEUE_MAX = 30;       // eventos pendientes que se conservan
+constexpr uint16_t BACKEND_TIMEOUT_MS = 2000;
+constexpr uint32_t BACKEND_RETRY_MS = 5000;
+
 // Caseta: servo y tiempos
-constexpr uint8_t GATE_CLOSED_DEG = 90;
-constexpr uint8_t GATE_OPEN_DEG = 180;
+constexpr uint8_t GATE_CLOSED_DEG = 0;
+constexpr uint8_t GATE_OPEN_DEG = 90;
 constexpr uint32_t GATE_TRAVEL_MS = 900;          // lo que tarda la barra en moverse
 constexpr uint32_t GATE_WAIT_VEHICLE_MS = 10000;  // espera máxima a que pase el vehículo
 constexpr uint32_t GATE_CLEAR_DELAY_MS = 1500;    // tiempo libre antes de cerrar
 
 // Caseta: sensor ultrasónico (calibrar con docs/caseta.md)
-constexpr uint16_t GATE_DETECT_CM = 5;
+constexpr uint16_t GATE_DETECT_CM = 15;
 constexpr uint16_t GATE_RELEASE_MARGIN_CM = 5;  // histéresis: libre al superar detect + margen
 constexpr uint16_t SENSOR_MAX_CM = 60;
 constexpr uint8_t SENSOR_CONFIRM_READS = 2;
