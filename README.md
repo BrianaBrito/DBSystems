@@ -9,11 +9,13 @@ portón de cochera por radiofrecuencia y registro de entradas en base de datos.
 
 ## Funcionalidades
 
+Guía para encender todo y resolver problemas comunes: [docs/puesta-en-marcha.md](docs/puesta-en-marcha.md).
+
 | Módulo | Qué hace | Hardware | Estado |
 |---|---|---|---|
 | Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
-| Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☐ |
-| Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☐ |
+| Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☑ ([docs](docs/caseta.md)) |
+| Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☑ ([docs](backend/README.md)) |
 | Cocina | Alerta (LED y buzzer) por temperatura alta o gas | DHT22, MQ2, LED, buzzer | ☐ |
 | Luces | Control de LEDs de recámaras desde la web; LED de presencia | 74HC595, sensor de presencia | ☐ |
 | Cochera | Abre y cierra el portón con control remoto de 433 MHz | RX480E + control Sonoff, servo | ☐ |
