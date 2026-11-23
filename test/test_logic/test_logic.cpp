@@ -3,8 +3,10 @@
  * Se ejecutan en la PC con:  pio test -e native
  */
 #include <GateLogic.h>
+#include <KitchenLogic.h>
 #include <PresenceFilter.h>
 #include <unity.h>
+#include <math.h>
 
 namespace {
 
@@ -236,6 +238,112 @@ void test_filter_no_echo_counts_as_absent() {
   TEST_ASSERT_FALSE(filter.present());
 }
 
+
+// ------------------------------------------------------------- KitchenLogic
+static KitchenLogicConfig kitchenCfg() {
+  KitchenLogicConfig c;
+  c.tempMaxC = 40.0f; c.tempHystC = 2.0f;
+  c.gasDelta = 400; c.gasHyst = 100;
+  c.confirmTemp = 2; c.confirmGas = 3;
+  c.warmupMs = 1000; c.baselineMs = 500;
+  return c;
+}
+
+// Lleva la lógica a Ready con línea base `base`, devolviendo el tiempo actual.
+static uint32_t kitchenReady(KitchenLogic& k, uint32_t t0, uint16_t base) {
+  k.reset(t0);
+  uint32_t t = t0;
+  for (int i = 0; i < 10; i++, t += 100) k.addGas(t, base);   // calentamiento
+  for (int i = 0; i < 5; i++, t += 100) k.addGas(t, base);    // línea base
+  k.addGas(t, base);                                        // cierra la ventana
+  return t;
+}
+
+void test_kitchen_warmup_ignores_readings() {
+  KitchenLogic k(kitchenCfg());
+  k.reset(0);
+  k.addGas(100, 4000);
+  TEST_ASSERT_EQUAL(KitchenLogic::WarmingUp, k.phase());
+  TEST_ASSERT_FALSE(k.gasAlert());
+}
+
+void test_kitchen_baseline_is_average() {
+  KitchenLogic k(kitchenCfg());
+  uint32_t t = kitchenReady(k, 0, 1000);
+  (void)t;
+  TEST_ASSERT_EQUAL(KitchenLogic::Ready, k.phase());
+  TEST_ASSERT_UINT16_WITHIN(5, 1000, k.gasBaseline());
+  TEST_ASSERT_UINT16_WITHIN(5, 1400, k.gasThreshold());
+}
+
+void test_kitchen_gas_alert_needs_confirmation_and_clears_with_hysteresis() {
+  KitchenLogic k(kitchenCfg());
+  uint32_t t = kitchenReady(k, 0, 1000);
+  for (int i = 0; i < 10; i++) { t += 100; k.addGas(t, 1600); }
+  TEST_ASSERT_TRUE(k.gasAlert());
+  // Entre umbral-hist y umbral: sigue en alerta
+  for (int i = 0; i < 30; i++) { t += 100; k.addGas(t, 1350); }
+  TEST_ASSERT_TRUE(k.gasAlert());
+  // Por debajo de umbral-hist: se despeja
+  for (int i = 0; i < 30; i++) { t += 100; k.addGas(t, 1000); }
+  TEST_ASSERT_FALSE(k.gasAlert());
+}
+
+void test_kitchen_single_gas_spike_no_alert() {
+  KitchenLogic k(kitchenCfg());
+  uint32_t t = kitchenReady(k, 0, 1000);
+  t += 100; k.addGas(t, 4095);
+  for (int i = 0; i < 10; i++) { t += 100; k.addGas(t, 1000); }
+  TEST_ASSERT_FALSE(k.gasAlert());
+}
+
+void test_kitchen_temp_alert_and_hysteresis() {
+  KitchenLogic k(kitchenCfg());
+  k.addTemperature(41.0f);
+  TEST_ASSERT_FALSE(k.tempAlert());      // falta confirmación
+  k.addTemperature(41.0f);
+  TEST_ASSERT_TRUE(k.tempAlert());
+  k.addTemperature(39.0f); k.addTemperature(39.0f);   // dentro de la histéresis
+  TEST_ASSERT_TRUE(k.tempAlert());
+  k.addTemperature(37.0f); k.addTemperature(37.0f);
+  TEST_ASSERT_FALSE(k.tempAlert());
+}
+
+void test_kitchen_nan_keeps_state_and_flags_invalid() {
+  KitchenLogic k(kitchenCfg());
+  k.addTemperature(41.0f); k.addTemperature(41.0f);
+  TEST_ASSERT_TRUE(k.tempAlert());
+  for (int i = 0; i < 5; i++) k.addTemperature(NAN);
+  TEST_ASSERT_TRUE(k.tempAlert());
+  TEST_ASSERT_FALSE(k.tempValid());
+  k.addTemperature(30.0f);
+  TEST_ASSERT_TRUE(k.tempValid());
+}
+
+void test_kitchen_recalibrate_clears_gas_alert() {
+  KitchenLogic k(kitchenCfg());
+  uint32_t t = kitchenReady(k, 0, 1000);
+  for (int i = 0; i < 10; i++) { t += 100; k.addGas(t, 1600); }
+  TEST_ASSERT_TRUE(k.gasAlert());
+  k.recalibrate(t);
+  TEST_ASSERT_FALSE(k.gasAlert());
+  TEST_ASSERT_EQUAL(KitchenLogic::Calibrating, k.phase());
+}
+
+void test_kitchen_set_gas_delta_clamps_hysteresis() {
+  KitchenLogic k(kitchenCfg());
+  k.setGasDelta(80);
+  TEST_ASSERT_TRUE(k.config().gasHyst < 80);
+}
+
+void test_kitchen_survives_millis_wraparound() {
+  KitchenLogic k(kitchenCfg());
+  uint32_t t = kitchenReady(k, 0xFFFFFF00u, 1000);
+  TEST_ASSERT_EQUAL(KitchenLogic::Ready, k.phase());
+  for (int i = 0; i < 10; i++) { t += 100; k.addGas(t, 1600); }
+  TEST_ASSERT_TRUE(k.gasAlert());
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_starts_closed);
@@ -255,5 +363,14 @@ int main(int, char**) {
   RUN_TEST(test_filter_ignores_isolated_spike);
   RUN_TEST(test_filter_hysteresis_keeps_state_between_thresholds);
   RUN_TEST(test_filter_no_echo_counts_as_absent);
+  RUN_TEST(test_kitchen_warmup_ignores_readings);
+  RUN_TEST(test_kitchen_baseline_is_average);
+  RUN_TEST(test_kitchen_gas_alert_needs_confirmation_and_clears_with_hysteresis);
+  RUN_TEST(test_kitchen_single_gas_spike_no_alert);
+  RUN_TEST(test_kitchen_temp_alert_and_hysteresis);
+  RUN_TEST(test_kitchen_nan_keeps_state_and_flags_invalid);
+  RUN_TEST(test_kitchen_recalibrate_clears_gas_alert);
+  RUN_TEST(test_kitchen_set_gas_delta_clamps_hysteresis);
+  RUN_TEST(test_kitchen_survives_millis_wraparound);
   return UNITY_END();
 }
