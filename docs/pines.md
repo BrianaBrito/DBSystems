@@ -18,8 +18,8 @@ Fuente única de verdad del cableado. Los mismos valores están en `include/conf
 | ECHO | HC-SR04 #1 (caseta) | 34 | 5 V | **Divisor de voltaje**; GPIO solo entrada |
 | TRIG | HC-SR04 #2 (presencia) | 26 | 5 V | |
 | ECHO | HC-SR04 #2 (presencia) | 35 | 5 V | **Divisor de voltaje**; GPIO solo entrada |
-| Datos | DHT22 | 4 | 3.3 V | Pull-up de 10 kΩ si el módulo no la trae |
-| Salida analógica (AO) | MQ2 | 32 | 5 V | ADC1; **divisor de voltaje** |
+| Datos (S) | KY-015 (DHT11) | 4 | 3.3 V | El módulo ya trae pull-up; pin central = VCC |
+| Salida analógica (AO) | MQ2 | 32 | 5 V | ADC1; **divisor de voltaje** (ver docs/cocina.md) |
 | Abrir (D0) | RX480E | 36 (VP) | 5 V | **Divisor de voltaje**; solo entrada |
 | Cerrar (D1) | RX480E | 39 (VN) | 5 V | **Divisor de voltaje**; solo entrada |
 | SER (datos) | 74HC595 | 16 | 3.3 V | LEDs de recámaras y presencia |
