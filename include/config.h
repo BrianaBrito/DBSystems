@@ -10,7 +10,7 @@
 #include <Arduino.h>
 
 #define FW_NAME "smart-home-esp32"
-#define FW_VERSION "0.2.0"
+#define FW_VERSION "0.3.0"
 
 namespace cfg {
 constexpr uint32_t SERIAL_BAUD = 115200;
@@ -45,6 +45,19 @@ constexpr uint32_t SENSOR_INTERVAL_MS = 100;
 constexpr uint32_t RFID_POLL_MS = 100;
 constexpr uint32_t RFID_COOLDOWN_MS = 2000;
 constexpr uint32_t LEARN_MODE_MS = 20000;
+
+// Cocina (valores iniciales; se pueden ajustar por API, ver docs/cocina.md)
+constexpr float KITCHEN_TEMP_MAX_C = 40.0f;      // alerta al alcanzarla
+constexpr float KITCHEN_TEMP_HYST_C = 2.0f;      // se despeja por debajo de max - hist
+constexpr uint16_t KITCHEN_GAS_DELTA = 450;      // cuentas ADC sobre la línea base
+constexpr uint16_t KITCHEN_GAS_HYST = 100;
+constexpr uint8_t KITCHEN_CONFIRM_TEMP = 2;      // lecturas seguidas (una cada 2 s)
+constexpr uint8_t KITCHEN_CONFIRM_GAS = 4;       // lecturas seguidas (una cada 200 ms)
+constexpr uint32_t KITCHEN_WARMUP_MS = 20000;    // el MQ-2 necesita calentar
+constexpr uint32_t KITCHEN_BASELINE_MS = 10000;  // ventana para medir aire "normal"
+constexpr uint32_t KITCHEN_DHT_MS = 2000;
+constexpr uint32_t KITCHEN_GAS_MS = 200;
+constexpr uint32_t KITCHEN_LED_BLINK_MS = 250;
 }  // namespace cfg
 
 namespace pins {
@@ -66,7 +79,7 @@ constexpr uint8_t PRESENCE_TRIG = 26;
 constexpr uint8_t PRESENCE_ECHO = 35;  // solo entrada
 
 // --- Cocina ---
-constexpr uint8_t DHT22 = 4;
+constexpr uint8_t DHT_DATA = 4;  // (no llamarlo DHT11 ni DHT22: son macros de la librería DHT)
 constexpr uint8_t MQ2_AO = 32;  // ADC1 (el ADC2 no funciona con WiFi activo); con divisor
 constexpr uint8_t KITCHEN_ALERT_LED = 22;
 
