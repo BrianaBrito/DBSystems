@@ -31,6 +31,9 @@ class Buzzer {
 
   bool isPlaying() const { return playing_; }
 
+  /** Patrón en curso (solo tiene sentido si isPlaying()). */
+  Pattern currentPattern() const { return pattern_; }
+
   struct Note {
     uint16_t freqHz;  // 0 = silencio
     uint16_t ms;
@@ -42,6 +45,7 @@ class Buzzer {
   void setTone(uint32_t freqHz);
 
   uint8_t pin_;
+  Pattern pattern_;
   const Note* notes_;
   uint8_t noteCount_;
   uint8_t index_;

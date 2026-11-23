@@ -18,7 +18,7 @@ static const Buzzer::Note kDeny[] = {{400, 250}, {0, 80}, {400, 250}};
 static const Buzzer::Note kAlert[] = {{2200, 200}, {0, 120}};
 
 Buzzer::Buzzer(uint8_t pin)
-    : pin_(pin), notes_(nullptr), noteCount_(0), index_(0), loop_(false), playing_(false), noteStartMs_(0) {}
+    : pin_(pin), pattern_(Click), notes_(nullptr), noteCount_(0), index_(0), loop_(false), playing_(false), noteStartMs_(0) {}
 
 void Buzzer::begin() {
 #if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
@@ -39,6 +39,7 @@ void Buzzer::setTone(uint32_t freqHz) {
 }
 
 void Buzzer::play(Pattern pattern, bool loop) {
+  pattern_ = pattern;
   switch (pattern) {
     case Click:
       notes_ = kClick;

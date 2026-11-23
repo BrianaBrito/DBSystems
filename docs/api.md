@@ -21,7 +21,7 @@ Estado general del sistema. Cada módulo registrado agrega su sección dentro de
 
 ```json
 {
-  "firmware": { "name": "smart-home-esp32", "version": "0.2.0" },
+  "firmware": { "name": "smart-home-esp32", "version": "0.1.0" },
   "uptime_s": 125,
   "heap_free": 214532,
   "wifi": {
@@ -39,25 +39,26 @@ Prueba rápida desde PowerShell:
 curl.exe http://192.168.4.1/api/status
 ```
 
-### Caseta (`/api/gate/*`)
+*(Los endpoints de cada módulo se documentan aquí conforme se agregan.)*
 
-Todas requieren `X-API-Token`. Detalles de uso y calibración en [caseta.md](caseta.md).
+### Cocina
 
-| Método | Ruta | Descripción | Respuesta |
+Sección `modules.kitchen` de `GET /api/status`:
+
+```json
+{
+  "phase": "ready", "alert": false, "temp_alert": false, "gas_alert": false,
+  "silenced": false, "dht_ok": true, "temperature_c": 26.4, "humidity": 48.1,
+  "temp_max_c": 40.0, "gas_raw": 1021, "gas_filtered": 1018,
+  "gas_baseline": 1005, "gas_threshold": 1455, "gas_delta": 450
+}
+```
+
+`phase`: `warming_up`, `calibrating` o `ready`. `temperature_c` y `humidity` son `null`
+si el sensor de temperatura no responde.
+
+| Método | Ruta | Token | Descripción |
 |---|---|---|---|
-| POST | `/api/gate/open` | Abre la barra (apertura manual) | `202` |
-| POST | `/api/gate/close` | Cierra la barra (solo mientras espera al vehículo) | `202` |
-| POST | `/api/gate/learn` | Ventana de 20 s para registrar la próxima tarjeta | `202` |
-| POST | `/api/gate/servo?closed=0&open=90` | Calibra los ángulos del servo (0-180); se guardan en NVS | `200`, `400` |
-| GET | `/api/gate/cards` | Lista de UIDs autorizados | `200` |
-| POST | `/api/gate/cards?uid=AABBCCDD` | Registra una tarjeta | `201`, `400`, `409`, `507` |
-| DELETE | `/api/gate/cards?uid=AABBCCDD` | Elimina una tarjeta | `200`, `404` |
-| GET | `/api/gate/log?limit=20` | Bitácora de accesos, la más reciente primero (máx. 50) | `200` |
-
-Evento de la bitácora: `{"seq":3,"uptime_s":412,"uid":"A1B2C3D4","result":"granted"}`.
-`result`: `granted`, `denied`, `learned`, `already_registered`, `card_list_full`, `manual_open`.
-
-En `GET /api/status` el módulo aparece como `modules.gate` con `state`, `vehicle_present`,
-`distance_cm`, `last_close_reason`, `rfid_ok`, `learn_mode` y `cards`.
-
-*(Los endpoints de los demás módulos se documentan aquí conforme se agregan.)*
+| POST | `/api/kitchen/silence` | sí | Silencia el buzzer de la alerta actual (el LED sigue). `202` |
+| POST | `/api/kitchen/calibrate` | sí | Vuelve a medir la línea base del gas. `202` |
+| POST | `/api/kitchen/config?temp_max=&gas_delta=` | sí | Cambia umbrales (20–100 °C, 50–3000); se guardan en NVS. `202`, `400` si es inválido |

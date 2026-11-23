@@ -14,6 +14,7 @@
 #include <BackendClient.h>
 #include <Buzzer.h>
 #include <GateModule.h>
+#include <KitchenModule.h>
 #include <Logger.h>
 #include <StatusLed.h>
 #include <WifiManager.h>
@@ -63,6 +64,25 @@ GateModuleConfig makeGateConfig() {
   return c;
 }
 
+KitchenModuleConfig makeKitchenConfig() {
+  KitchenModuleConfig c;
+  c.dhtPin = pins::DHT_DATA;
+  c.gasPin = pins::MQ2_AO;
+  c.ledPin = pins::KITCHEN_ALERT_LED;
+  c.dhtIntervalMs = cfg::KITCHEN_DHT_MS;
+  c.gasIntervalMs = cfg::KITCHEN_GAS_MS;
+  c.ledBlinkMs = cfg::KITCHEN_LED_BLINK_MS;
+  c.logic.tempMaxC = cfg::KITCHEN_TEMP_MAX_C;
+  c.logic.tempHystC = cfg::KITCHEN_TEMP_HYST_C;
+  c.logic.gasDelta = cfg::KITCHEN_GAS_DELTA;
+  c.logic.gasHyst = cfg::KITCHEN_GAS_HYST;
+  c.logic.confirmTemp = cfg::KITCHEN_CONFIRM_TEMP;
+  c.logic.confirmGas = cfg::KITCHEN_CONFIRM_GAS;
+  c.logic.warmupMs = cfg::KITCHEN_WARMUP_MS;
+  c.logic.baselineMs = cfg::KITCHEN_BASELINE_MS;
+  return c;
+}
+
 BackendClientConfig makeBackendConfig() {
   BackendClientConfig c;
 #ifdef BACKEND_URL
@@ -86,6 +106,7 @@ ApiServer api(cfg::HTTP_PORT, API_TOKEN, FW_NAME, FW_VERSION, wifi);
 StatusLed statusLed(pins::STATUS_LED);
 Buzzer buzzer(pins::BUZZER);
 GateModule gate(makeGateConfig(), buzzer);
+KitchenModule kitchen(makeKitchenConfig(), buzzer);
 BackendClient backend(makeBackendConfig());
 
 }  // namespace
@@ -130,6 +151,8 @@ void setup() {
   // Los módulos se registran y arrancan ANTES de api.begin().
   api.addModule(&gate);
   gate.begin();
+  api.addModule(&kitchen);
+  kitchen.begin();
 
   wifi.begin();
   api.begin();
@@ -141,6 +164,7 @@ void loop() {
   wifi.update(now);
   buzzer.update(now);
   gate.update(now);
+  kitchen.update(now);
 
   if (!wifi.isStaConfigured()) {
     statusLed.setPattern(StatusLed::BlinkSlow);  // solo AP
