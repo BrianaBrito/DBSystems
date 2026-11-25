@@ -14,10 +14,9 @@ Fuente única de verdad del cableado. Los mismos valores están en `include/conf
 | RST | RC522 | 27 | 3.3 V | |
 | Señal servo caseta | Servo 1 | 13 | 5 V externa | GND común con el ESP32 |
 | Señal servo portón | Servo 2 | 14 | 5 V externa | GND común con el ESP32 |
-| TRIG | HC-SR04 #1 (caseta) | 25 | 5 V | |
-| ECHO | HC-SR04 #1 (caseta) | 34 | 5 V | **Divisor de voltaje**; GPIO solo entrada |
-| TRIG | HC-SR04 #2 (presencia) | 26 | 5 V | |
-| ECHO | HC-SR04 #2 (presencia) | 35 | 5 V | **Divisor de voltaje**; GPIO solo entrada |
+| TRIG | HC-SR04 (caseta) | 25 | 5 V | |
+| ECHO | HC-SR04 (caseta) | 34 | 5 V | **Divisor de voltaje**; GPIO solo entrada |
+| OUT | PIR HC-SR501 (presencia) | 26 | 5 V | Salida de 3.3 V: sin divisor; ver docs/luces.md |
 | Datos (S) | KY-015 (DHT11) | 4 | 3.3 V | El módulo ya trae pull-up; pin central = VCC |
 | Salida analógica (AO) | MQ2 | 32 | 5 V | ADC1; **divisor de voltaje** (ver docs/cocina.md) |
 | Abrir (D0) | RX480E | 36 (VP) | 5 V | **Divisor de voltaje**; solo entrada |
@@ -52,8 +51,9 @@ encadenar un segundo 595 con los mismos tres pines.
   100–470 µF cerca de los servos evita reinicios por caídas de voltaje.
 - **ADC.** El ADC2 no funciona con WiFi activo: las lecturas analógicas van en
   ADC1 (GPIO 32–39).
-- **Pines evitados a propósito:** 0, 2*, 12 y 15 (arranque), 6–11 (flash) y 1 y 3
-  (puerto serie). *El GPIO 2 se usa solo como salida del LED integrado, lo cual
-  es seguro una vez arrancada la placa.
+- **Pines evitados a propósito:** 0, 2*, 12 (arranque), 6–11 (flash) y 1 y 3 (puerto
+  serie). *El GPIO 2 se usa solo como salida del LED integrado, lo cual es seguro una
+  vez arrancada la placa.
+- **GPIO 15:** pin de arranque; queda libre a propósito.
 - **Solo entrada:** GPIO 34, 35, 36 y 39 no tienen pull-up interno ni pueden ser
   salidas.
