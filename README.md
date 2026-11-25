@@ -13,14 +13,13 @@ Guía para encender todo y resolver problemas comunes: [docs/puesta-en-marcha.md
 
 | Módulo | Qué hace | Hardware | Estado |
 |---|---|---|---|
-| Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
+| | Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
 | Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☑ ([docs](docs/caseta.md)) |
 | Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☑ ([docs](backend/README.md)) |
 | Cocina | Alerta (LED y buzzer) por temperatura alta o gas | KY-015 (DHT11), MQ2, LED, buzzer | ☑ ([docs](docs/cocina.md)) |
 | Luces | Control de LEDs de recámaras desde la web; LED de presencia | 74HC595, PIR HC-SR501 | ☑ ([docs](docs/luces.md)) |
 | Cochera | Abre y cierra un portón de una hoja con control remoto de 433 MHz | RX480E + control Sonoff, 1 servo | ☑ ([docs](docs/cochera.md)) |
-| Panel web | Página servida por el ESP32 para controlar y consultar todos los módulos | LittleFS | ☑ ([docs](docs/panel.md)) |
-
+| Panel web | Página servida por el ESP32 para controlar y consultar todos los módulos | LittleFS | ☐ |
 ## Arquitectura
 
 ```
