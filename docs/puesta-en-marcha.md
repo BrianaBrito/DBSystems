@@ -13,6 +13,10 @@ flowchart LR
         GATE --> BUZ[Buzzer]
         GATE --> CLIENT[BackendClient]
         API[API HTTP :80]
+        KIT[KitchenModule] --> BUZ
+        LIGHTS[LightsModule]
+        GARAGE[GarageModule]
+        PANEL[Panel web LittleFS] --- API
     end
     CLIENT -- "POST /api/events.php" --> PHP[Backend PHP :8000]
     PHP --> DB[(SQLite)]
@@ -35,8 +39,10 @@ laptop y debe estar en la **misma red** que el ESP32 para que este pueda enviarl
 4. **Credenciales:** copia `include/secrets.h.example` como `include/secrets.h` y completa
    `AP_SSID`, `AP_PASS`, `WIFI_STA_SSID`, `WIFI_STA_PASS`, `API_TOKEN` y `BACKEND_URL`.
    `secrets.h` está en `.gitignore` y no se sube.
-5. **Servo:** calibra los ángulos con `POST /api/gate/servo` (ver [caseta.md](caseta.md)).
-6. **Tarjetas:** registra las tuyas con `POST /api/gate/learn` y acercándola al lector.
+5. **Panel web:** sube el sistema de archivos una vez (y cada vez que cambies `data/`):
+   PlatformIO → *Upload Filesystem Image* (o `pio run -t uploadfs`), con el monitor serie cerrado.
+6. **Servo:** calibra los ángulos con `POST /api/gate/servo` (ver [caseta.md](caseta.md)).
+7. **Tarjetas:** registra las tuyas con `POST /api/gate/learn` y acercándola al lector.
 
 ## Cada vez que lo enciendes
 
@@ -54,7 +60,7 @@ laptop y debe estar en la **misma red** que el ESP32 para que este pueda enviarl
    ```
 4. **Enciende el ESP32** por USB. En el monitor serie debe aparecer `RC522 detectado` y el
    AP activo; con hotspot, también `STA conectada`.
-5. **Comprueba el estado:** `http://192.168.4.1/api/status` → `modules.gate.rfid_ok: true`.
+5. **Comprueba el estado:** abre `http://192.168.4.1` (panel) o `/api/status` → `modules.gate.rfid_ok: true`.
 6. **Prueba el flujo:** acerca la tarjeta; la barra abre y cierra, y el evento aparece en
    `http://localhost:8000`.
 
@@ -69,3 +75,6 @@ laptop y debe estar en la **misma red** que el ESP32 para que este pueda enviarl
 | La barra no se mueve | Servo sin 5 V o sin GND común con el ESP32 |
 | `401` en el log de PHP | `config.php` y `API_TOKEN` tienen tokens distintos |
 | `distance_cm: -1` fijo | Sin eco: carril libre (normal) o sensor sin 5 V / cableado |
+| `Panel no instalado` al abrir `/` | Falta *Upload Filesystem Image* |
+| El panel dice `Token incorrecto` | El token tecleado no es el `API_TOKEN` de `secrets.h` |
+| El ESP32 se reinicia al mover el portón | Poca corriente: capacitor de 1000 µF en el riel de los servos o alimentar con cargador |

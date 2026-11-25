@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casa Inteligente</title>
+<style>
+  :root{--bg:#0f1720;--card:#18232f;--line:#27384a;--tx:#e8eef5;--mut:#8aa0b5;--ok:#3ddc97;--warn:#ffb020;--bad:#ff5d5d;--acc:#4da3ff}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+  header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-bottom:1px solid var(--line)}
+  h1{font-size:1.15rem;margin:0}
+  .pill{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;background:var(--line);color:var(--mut)}
+  .pill.ok{background:#12382a;color:var(--ok)} .pill.warn{background:#3d2e0c;color:var(--warn)} .pill.bad{background:#401818;color:var(--bad)}
+  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1rem;padding:1rem;max-width:1200px;margin:auto}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem}
+  section h2{font-size:1rem;margin:0 0 .7rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.25rem .8rem;font-size:.9rem}
+  dt{color:var(--mut)} dd{margin:0;text-align:right}
+  .row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+  button{font:inherit;font-size:.88rem;color:var(--tx);background:#22334a;border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;cursor:pointer}
+  button:hover{border-color:var(--acc)} button:active{background:#2c4466}
+  button.on{background:#12382a;border-color:var(--ok);color:var(--ok)}
+  button.danger{border-color:#5a2a2a}
+  .rooms{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-top:.6rem}
+  .rooms button{padding:.6rem 0;text-align:center}
+  .bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:.6rem}
+  .bar>i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
+  .alert{background:#401818;border:1px solid var(--bad);color:#ffd0d0;padding:.5rem .7rem;border-radius:8px;margin-top:.7rem;font-size:.9rem}
+  .hide{display:none!important}
+  #toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:#22334a;border:1px solid var(--line);padding:.6rem 1rem;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw}
+  #toast.show{opacity:1} #toast.err{border-color:var(--bad)}
+  input{font:inherit;background:#0f1720;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;width:11rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏠 Casa Inteligente</h1>
+  <div>
+    <span id="conn" class="pill">conectando…</span>
+    <span id="fw" class="pill"></span>
+    <span id="upt" class="pill"></span>
+    <button id="tokbtn">Token</button>
+  </div>
+</header>
+<main>
+  <section id="s-gate"><h2>Caseta <span class="pill" id="gate-state"></span></h2>
+    <dl>
+      <dt>Vehículo presente</dt><dd id="gate-veh"></dd>
+      <dt>Distancia</dt><dd id="gate-dist"></dd>
+      <dt>Último cierre</dt><dd id="gate-reason"></dd>
+      <dt>Lector RFID</dt><dd id="gate-rfid"></dd>
+      <dt>Tarjetas registradas</dt><dd id="gate-cards"></dd>
+      <dt>Modo aprendizaje</dt><dd id="gate-learn"></dd>
+    </dl>
+    <div class="row">
+      <button data-post="/api/gate/open">Abrir barra</button>
+      <button data-post="/api/gate/close">Cerrar barra</button>
+      <button data-post="/api/gate/learn">Registrar tarjeta</button>
+    </div>
+  </section>
+
+  <section id="s-kitchen"><h2>Cocina <span class="pill" id="k-phase"></span></h2>
+    <div id="k-alert" class="alert hide"></div>
+    <dl>
+      <dt>Temperatura</dt><dd id="k-temp"></dd>
+      <dt>Humedad</dt><dd id="k-hum"></dd>
+      <dt>Gas (lectura / umbral)</dt><dd id="k-gas"></dd>
+      <dt>Línea base de gas</dt><dd id="k-base"></dd>
+      <dt>Alarma silenciada</dt><dd id="k-sil"></dd>
+    </dl>
+    <div class="bar"><i id="k-bar"></i></div>
+    <div class="row">
+      <button data-post="/api/kitchen/silence">Silenciar</button>
+      <button data-post="/api/kitchen/calibrate" data-confirm="Hazlo con aire limpio. ¿Recalibrar el gas?">Recalibrar gas</button>
+    </div>
+  </section>
+
+  <section id="s-lights"><h2>Luces <span class="pill" id="l-pres"></span></h2>
+    <div class="rooms" id="rooms"></div>
+    <div class="row">
+      <button data-post="/api/lights/all?state=on">Encender todas</button>
+      <button data-post="/api/lights/all?state=off">Apagar todas</button>
+    </div>
+    <dl style="margin-top:.8rem">
+      <dt>Movimiento (PIR)</dt><dd id="l-motion"></dd>
+      <dt>Sensor PIR</dt><dd id="l-ready"></dd>
+    </dl>
+    <div class="row">
+      <button id="l-ptoggle">LED de presencia</button>
+    </div>
+  </section>
+
+  <section id="s-garage"><h2>Cochera <span class="pill" id="g-state"></span></h2>
+    <dl>
+      <dt>Posición</dt><dd id="g-pos"></dd>
+      <dt>Ángulo del servo</dt><dd id="g-deg"></dd>
+      <dt>Última orden</dt><dd id="g-last"></dd>
+    </dl>
+    <div class="bar"><i id="g-bar"></i></div>
+    <div class="row">
+      <button data-post="/api/garage/open">Abrir portón</button>
+      <button data-post="/api/garage/close">Cerrar portón</button>
+    </div>
+  </section>
+
+  <section id="s-sys"><h2>Sistema</h2>
+    <dl>
+      <dt>Red propia (AP)</dt><dd id="w-ap"></dd>
+      <dt>Clientes en el AP</dt><dd id="w-cli"></dd>
+      <dt>Red externa (STA)</dt><dd id="w-sta"></dd>
+      <dt>Memoria libre</dt><dd id="w-heap"></dd>
+    </dl>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var token = '';
+  try { token = sessionStorage.getItem('token') || ''; } catch(e) {}
+  var last = null, fails = 0, toastTimer = null;
+
+  function toast(msg, err){
+    var t = $('toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.className = ''; }, 2500);
+  }
+  function setText(id, v){ $(id).textContent = v; }
+  function yn(v){ return v ? 'sí' : 'no'; }
+  function pill(id, text, cls){ var e = $(id); e.textContent = text; e.className = 'pill ' + (cls || ''); }
+  function ask(force){
+    if (!force && token) return true;
+    var v = window.prompt('Token de la API (X-API-Token):', token);
+    if (v === null) return false;
+    token = v.trim();
+    try { sessionStorage.setItem('token', token); } catch(e) {}
+    return !!token;
+  }
+
+  function post(path, label){
+    if (!ask(false)) return;
+    fetch(path, { method: 'POST', headers: { 'X-API-Token': token } })
+      .then(function(r){
+        if (r.status === 401) { token = ''; try { sessionStorage.removeItem('token'); } catch(e) {} throw new Error('Token incorrecto'); }
+        return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || ('Error ' + r.status)); return j; });
+      })
+      .then(function(){ toast((label || 'Orden enviada') + ' ✔'); refresh(); })
+      .catch(function(e){ toast(e.message, true); });
+  }
+
+  document.querySelectorAll('button[data-post]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var c = b.getAttribute('data-confirm');
+      if (c && !window.confirm(c)) return;
+      post(b.getAttribute('data-post'), b.textContent);
+    });
+  });
+  $('tokbtn').addEventListener('click', function(){ ask(true); });
+
+  var rooms = $('rooms');
+  for (var i = 1; i <= 5; i++) {
+    (function(n){
+      var b = document.createElement('button');
+      b.id = 'room' + n; b.textContent = 'R' + n;
+      b.addEventListener('click', function(){ post('/api/lights/room?n=' + n + '&state=toggle', 'Recámara ' + n); });
+      rooms.appendChild(b);
+    })(i);
+  }
+  $('l-ptoggle').addEventListener('click', function(){
+    var en = last && last.modules.lights.presence_enabled;
+    post('/api/lights/presence?mode=' + (en ? 'off' : 'auto'), 'LED de presencia');
+  });
+
+  function fmtUp(s){
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h > 0 ? h + ' h ' + m + ' min' : m + ' min ' + (s % 60) + ' s';
+  }
+  var gateNames = { closed:'cerrada', opening:'abriendo', waiting_vehicle:'esperando vehículo', vehicle_passing:'pasando vehículo', closing:'cerrando' };
+  var garageNames = { closed:'cerrado', opening:'abriendo', open:'abierto', closing:'cerrando' };
+  var phaseNames = { warming_up:'calentando', calibrating:'calibrando', ready:'listo' };
+  var cmdNames = { remote:'control remoto', api:'API / panel', none:'ninguna' };
+
+  function render(s){
+    last = s;
+    pill('conn', 'en línea', 'ok');
+    setText('fw', 'v' + s.firmware.version);
+    setText('upt', fmtUp(s.uptime_s));
+    var g = s.modules.gate, k = s.modules.kitchen, l = s.modules.lights, c = s.modules.garage;
+
+    pill('gate-state', gateNames[g.state] || g.state, g.state === 'closed' ? '' : 'warn');
+    setText('gate-veh', yn(g.vehicle_present));
+    setText('gate-dist', g.distance_cm == null || g.distance_cm < 0 ? '—' : Math.round(g.distance_cm) + ' cm');
+    setText('gate-reason', g.last_close_reason || '—');
+    setText('gate-rfid', g.rfid_ok ? 'detectado' : 'no responde');
+    setText('gate-cards', g.cards);
+    setText('gate-learn', g.learn_mode ? 'activo' : 'no');
+
+    pill('k-phase', phaseNames[k.phase] || k.phase, k.phase === 'ready' ? 'ok' : 'warn');
+    var al = $('k-alert');
+    if (k.alert) {
+      var why = [];
+      if (k.temp_alert) why.push('temperatura alta');
+      if (k.gas_alert) why.push('gas detectado');
+      al.textContent = '⚠ Alerta: ' + why.join(' y ');
+      al.classList.remove('hide');
+    } else al.classList.add('hide');
+    setText('k-temp', k.temperature_c == null ? '—' : k.temperature_c.toFixed(1) + ' °C (máx. ' + k.temp_max_c + ')');
+    setText('k-hum', k.humidity == null ? '—' : k.humidity.toFixed(0) + ' %');
+    setText('k-gas', k.gas_filtered + ' / ' + k.gas_threshold);
+    setText('k-base', k.gas_baseline);
+    setText('k-sil', yn(k.silenced));
+    var pct = k.gas_threshold > 0 ? Math.min(100, 100 * k.gas_filtered / k.gas_threshold) : 0;
+    var bar = $('k-bar'); bar.style.width = pct + '%'; bar.style.background = k.gas_alert ? 'var(--bad)' : 'var(--acc)';
+
+    for (var i = 0; i < 5; i++) {
+      var b = $('room' + (i + 1)); b.className = l.rooms[i] ? 'on' : '';
+    }
+    pill('l-pres', l.presence ? 'presencia' : 'sin presencia', l.presence ? 'ok' : '');
+    setText('l-motion', yn(l.motion));
+    setText('l-ready', l.pir_ready ? 'listo' : 'calentando');
+    $('l-ptoggle').textContent = 'LED de presencia: ' + (l.presence_enabled ? 'automático' : 'apagado');
+    $('l-ptoggle').className = l.presence_enabled ? 'on' : '';
+
+    pill('g-state', garageNames[c.state] || c.state, c.state === 'closed' ? '' : 'warn');
+    setText('g-pos', c.position_pct + ' %');
+    setText('g-deg', c.deg + '°');
+    setText('g-last', cmdNames[c.last_command] || c.last_command);
+    $('g-bar').style.width = c.position_pct + '%';
+
+    var ap = s.wifi.ap, st = s.wifi.sta;
+    setText('w-ap', ap.ssid + ' · ' + ap.ip);
+    setText('w-cli', ap.clients);
+    setText('w-sta', !st.configured ? 'sin configurar' : (st.connected ? st.ssid + ' · ' + st.ip + ' (' + st.rssi + ' dBm)' : 'desconectada'));
+    setText('w-heap', Math.round(s.heap_free / 1024) + ' KB');
+  }
+
+  function refresh(){
+    fetch('/api/status', { cache: 'no-store' })
+      .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(s){ fails = 0; render(s); })
+      .catch(function(){ if (++fails >= 2) pill('conn', 'sin conexión', 'bad'); });
+  }
+  refresh();
+  setInterval(function(){ if (!document.hidden) refresh(); }, 1500);
+})();
+</script>
+</body>
+</html>
