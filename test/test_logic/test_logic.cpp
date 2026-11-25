@@ -4,6 +4,8 @@
  */
 #include <GateLogic.h>
 #include <KitchenLogic.h>
+#include <LightsLogic.h>
+#include <GarageLogic.h>
 #include <PresenceFilter.h>
 #include <unity.h>
 #include <math.h>
@@ -344,6 +346,219 @@ void test_kitchen_survives_millis_wraparound() {
   TEST_ASSERT_TRUE(k.gasAlert());
 }
 
+
+// -------------------------------------------------------------- LightsLogic
+void test_lights_start_off() {
+  LightBank b;
+  TEST_ASSERT_EQUAL_UINT8(0, b.output());
+}
+
+void test_lights_set_and_toggle_room() {
+  LightBank b;
+  TEST_ASSERT_TRUE(b.setRoom(1, true));
+  TEST_ASSERT_TRUE(b.setRoom(3, true));
+  TEST_ASSERT_EQUAL_UINT8(0b00000101, b.output());
+  TEST_ASSERT_TRUE(b.toggleRoom(3));
+  TEST_ASSERT_FALSE(b.room(3));
+  TEST_ASSERT_TRUE(b.room(1));
+  TEST_ASSERT_TRUE(b.setRoom(1, false));
+  TEST_ASSERT_EQUAL_UINT8(0, b.output());
+}
+
+void test_lights_invalid_room_rejected() {
+  LightBank b;
+  TEST_ASSERT_FALSE(b.setRoom(0, true));
+  TEST_ASSERT_FALSE(b.setRoom(6, true));
+  TEST_ASSERT_FALSE(b.toggleRoom(9));
+  TEST_ASSERT_EQUAL_UINT8(0, b.output());
+}
+
+void test_lights_all_and_presence_bit() {
+  LightBank b;
+  b.setAll(true);
+  TEST_ASSERT_EQUAL_UINT8(0x1F, b.output());
+  b.setPresence(true);
+  TEST_ASSERT_EQUAL_UINT8(0x3F, b.output());
+  b.setAll(false);
+  TEST_ASSERT_EQUAL_UINT8(0x20, b.output());  // la presencia no se apaga con "todas"
+}
+
+void test_presence_ignores_motion_during_warmup() {
+  PresenceHold p(1000, 500);
+  p.reset(0);
+  p.update(500, true);
+  TEST_ASSERT_FALSE(p.active());
+  p.update(1000, true);
+  TEST_ASSERT_TRUE(p.active());
+}
+
+void test_presence_holds_after_motion_stops() {
+  PresenceHold p(0, 500);
+  p.reset(0);
+  p.update(100, true);
+  p.update(400, false);
+  TEST_ASSERT_TRUE(p.active());
+  p.update(700, false);   // 600 ms desde el ultimo movimiento
+  TEST_ASSERT_FALSE(p.active());
+}
+
+void test_presence_new_motion_extends_hold() {
+  PresenceHold p(0, 500);
+  p.reset(0);
+  p.update(100, true);
+  p.update(500, true);
+  p.update(900, false);
+  TEST_ASSERT_TRUE(p.active());
+  p.update(1000, false);
+  TEST_ASSERT_FALSE(p.active());
+}
+
+void test_presence_survives_millis_wraparound() {
+  PresenceHold p(0, 500);
+  p.reset(0xFFFFFF00u);
+  p.update(0xFFFFFF10u, true);
+  p.update(0x00000050u, false);   // cruza el cero, pasaron ~320 ms
+  TEST_ASSERT_TRUE(p.active());
+  p.update(0x00000200u, false);   // ~ 0x2F0 = 752 ms
+  TEST_ASSERT_FALSE(p.active());
+}
+
+
+// -------------------------------------------------------------- GarageLogic
+void test_garage_starts_closed() {
+  GarageLogic g(2000);
+  g.begin(0);
+  TEST_ASSERT_EQUAL(GarageLogic::Closed, g.state());
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, g.position());
+}
+
+void test_garage_opens_in_travel_time() {
+  GarageLogic g(2000);
+  g.begin(0);
+  TEST_ASSERT_TRUE(g.requestOpen());
+  g.update(1000);
+  TEST_ASSERT_EQUAL(GarageLogic::Opening, g.state());
+  TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.5f, g.position());
+  g.update(2000);
+  TEST_ASSERT_EQUAL(GarageLogic::Open, g.state());
+  TEST_ASSERT_EQUAL_FLOAT(1.0f, g.position());
+}
+
+void test_garage_close_after_open() {
+  GarageLogic g(1000);
+  g.begin(0);
+  g.requestOpen();
+  g.update(1000);
+  TEST_ASSERT_TRUE(g.requestClose());
+  g.update(1500);
+  TEST_ASSERT_EQUAL(GarageLogic::Closing, g.state());
+  g.update(2000);
+  TEST_ASSERT_EQUAL(GarageLogic::Closed, g.state());
+}
+
+void test_garage_reverses_from_current_position() {
+  GarageLogic g(1000);
+  g.begin(0);
+  g.requestOpen();
+  g.update(400);                       // pos 0.4
+  TEST_ASSERT_TRUE(g.requestClose());
+  g.update(600);                       // 0.2 de regreso
+  TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.2f, g.position());
+  TEST_ASSERT_TRUE(g.requestOpen());
+  TEST_ASSERT_EQUAL(GarageLogic::Opening, g.state());
+}
+
+void test_garage_redundant_commands_ignored() {
+  GarageLogic g(1000);
+  g.begin(0);
+  TEST_ASSERT_FALSE(g.requestClose());   // ya cerrado
+  g.requestOpen();
+  TEST_ASSERT_FALSE(g.requestOpen());    // ya abriendo
+  g.update(1000);
+  TEST_ASSERT_FALSE(g.requestOpen());    // ya abierto
+}
+
+void test_garage_angle_interpolation_both_directions() {
+  TEST_ASSERT_EQUAL_INT(0, GarageLogic::angleFor(0.0f, 0, 90));
+  TEST_ASSERT_EQUAL_INT(45, GarageLogic::angleFor(0.5f, 0, 90));
+  TEST_ASSERT_EQUAL_INT(90, GarageLogic::angleFor(1.0f, 0, 90));
+  TEST_ASSERT_EQUAL_INT(180, GarageLogic::angleFor(0.0f, 180, 90));
+  TEST_ASSERT_EQUAL_INT(135, GarageLogic::angleFor(0.5f, 180, 90));
+  TEST_ASSERT_EQUAL_INT(90, GarageLogic::angleFor(1.0f, 180, 90));
+}
+
+void test_garage_survives_millis_wraparound() {
+  GarageLogic g(1000);
+  g.begin(0xFFFFFF00u);
+  g.requestOpen();
+  g.update(0x00000100u);   // pasaron 0x200 = 512 ms
+  TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.512f, g.position());
+}
+
+void test_garage_toggle_alternates_open_close() {
+  GarageLogic g(1000);
+  g.begin(0);
+  TEST_ASSERT_TRUE(g.toggle());
+  TEST_ASSERT_EQUAL(GarageLogic::Opening, g.state());
+  g.update(1000);
+  TEST_ASSERT_EQUAL(GarageLogic::Open, g.state());
+  TEST_ASSERT_TRUE(g.toggle());
+  TEST_ASSERT_EQUAL(GarageLogic::Closing, g.state());
+  g.update(1500);
+  TEST_ASSERT_TRUE(g.toggle());           // a medio cierre: vuelve a abrir
+  TEST_ASSERT_EQUAL(GarageLogic::Opening, g.state());
+  g.update(1600);
+  TEST_ASSERT_TRUE(g.toggle());           // a medio abrir: vuelve a cerrar
+  TEST_ASSERT_EQUAL(GarageLogic::Closing, g.state());
+}
+
+
+void test_remote_toggle_fires_on_each_level_change() {
+  RemoteToggle b(50, 300);
+  TEST_ASSERT_FALSE(b.update(0, false));        // referencia
+  TEST_ASSERT_FALSE(b.update(1000, true));
+  TEST_ASSERT_TRUE(b.update(1060, true));       // 0 -> 1
+  TEST_ASSERT_FALSE(b.update(1500, true));      // sigue en 1: nada
+  TEST_ASSERT_FALSE(b.update(2000, false));
+  TEST_ASSERT_TRUE(b.update(2060, false));      // 1 -> 0
+}
+
+void test_remote_toggle_ignores_glitch() {
+  RemoteToggle b(50, 300);
+  b.update(0, false);
+  TEST_ASSERT_FALSE(b.update(1000, true));
+  TEST_ASSERT_FALSE(b.update(1020, false));     // pulso de 20 ms: ruido
+  TEST_ASSERT_FALSE(b.update(1100, false));
+  TEST_ASSERT_FALSE(b.update(1200, false));
+}
+
+void test_remote_toggle_baseline_at_boot_is_not_a_press() {
+  RemoteToggle b(50, 300);
+  TEST_ASSERT_FALSE(b.update(0, true));         // el receptor ya estaba en 1
+  TEST_ASSERT_FALSE(b.update(500, true));
+  TEST_ASSERT_FALSE(b.update(1000, false));
+  TEST_ASSERT_TRUE(b.update(1060, false));      // el primer cambio real sí cuenta
+}
+
+void test_remote_toggle_fast_second_press_waits_for_lock() {
+  RemoteToggle b(50, 300);
+  b.update(0, false);
+  b.update(1000, true);
+  TEST_ASSERT_TRUE(b.update(1060, true));
+  b.update(1100, false);                        // segunda pulsación muy rápida
+  TEST_ASSERT_FALSE(b.update(1200, false));     // confirmada pero dentro del bloqueo
+  TEST_ASSERT_TRUE(b.update(1360, false));      // se aplica al vencer los 300 ms
+}
+
+void test_remote_toggle_survives_millis_wraparound() {
+  RemoteToggle b(50, 300);
+  b.update(0xFFFFFF00u, false);
+  b.update(0xFFFFFF80u, true);
+  TEST_ASSERT_TRUE(b.update(0xFFFFFFC0u, true));
+  b.update(0x00000200u, false);
+  TEST_ASSERT_TRUE(b.update(0x00000240u, false));
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_starts_closed);
@@ -372,5 +587,26 @@ int main(int, char**) {
   RUN_TEST(test_kitchen_recalibrate_clears_gas_alert);
   RUN_TEST(test_kitchen_set_gas_delta_clamps_hysteresis);
   RUN_TEST(test_kitchen_survives_millis_wraparound);
+  RUN_TEST(test_lights_start_off);
+  RUN_TEST(test_lights_set_and_toggle_room);
+  RUN_TEST(test_lights_invalid_room_rejected);
+  RUN_TEST(test_lights_all_and_presence_bit);
+  RUN_TEST(test_presence_ignores_motion_during_warmup);
+  RUN_TEST(test_presence_holds_after_motion_stops);
+  RUN_TEST(test_presence_new_motion_extends_hold);
+  RUN_TEST(test_presence_survives_millis_wraparound);
+  RUN_TEST(test_garage_starts_closed);
+  RUN_TEST(test_garage_opens_in_travel_time);
+  RUN_TEST(test_garage_close_after_open);
+  RUN_TEST(test_garage_reverses_from_current_position);
+  RUN_TEST(test_garage_redundant_commands_ignored);
+  RUN_TEST(test_garage_angle_interpolation_both_directions);
+  RUN_TEST(test_garage_survives_millis_wraparound);
+  RUN_TEST(test_garage_toggle_alternates_open_close);
+  RUN_TEST(test_remote_toggle_fires_on_each_level_change);
+  RUN_TEST(test_remote_toggle_ignores_glitch);
+  RUN_TEST(test_remote_toggle_baseline_at_boot_is_not_a_press);
+  RUN_TEST(test_remote_toggle_fast_second_press_waits_for_lock);
+  RUN_TEST(test_remote_toggle_survives_millis_wraparound);
   return UNITY_END();
 }

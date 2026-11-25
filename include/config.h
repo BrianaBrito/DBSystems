@@ -10,7 +10,7 @@
 #include <Arduino.h>
 
 #define FW_NAME "smart-home-esp32"
-#define FW_VERSION "0.3.0"
+#define FW_VERSION "0.5.1"
 
 namespace cfg {
 constexpr uint32_t SERIAL_BAUD = 115200;
@@ -58,6 +58,19 @@ constexpr uint32_t KITCHEN_BASELINE_MS = 10000;  // ventana para medir aire "nor
 constexpr uint32_t KITCHEN_DHT_MS = 2000;
 constexpr uint32_t KITCHEN_GAS_MS = 200;
 constexpr uint32_t KITCHEN_LED_BLINK_MS = 250;
+
+// Luces: sensor PIR de presencia
+constexpr uint32_t PIR_WARMUP_MS = 30000;   // el HC-SR501 necesita ~30-60 s al encender
+constexpr uint32_t PRESENCE_HOLD_MS = 10000;  // el LED sigue encendido tras el último movimiento
+constexpr uint32_t PIR_INTERVAL_MS = 100;
+
+// Cochera: portón de una hoja con un servo en la bisagra
+constexpr uint8_t GARAGE_CLOSED_DEG = 180;          // calibrable por API
+constexpr uint8_t GARAGE_OPEN_DEG = 90;
+constexpr uint32_t GARAGE_TRAVEL_MS = 2000;       // tiempo de apertura o cierre
+constexpr uint32_t GARAGE_RF_DEBOUNCE_MS = 50;
+constexpr uint32_t GARAGE_RF_LOCK_MS = 400;       // tiempo muerto entre pulsaciones
+constexpr uint32_t GARAGE_SERVO_INTERVAL_MS = 20;
 }  // namespace cfg
 
 namespace pins {
@@ -72,11 +85,11 @@ constexpr uint8_t RFID_RST = 27;
 constexpr uint8_t SERVO_GATE = 13;    // caseta de acceso
 constexpr uint8_t SERVO_GARAGE = 14;  // portón de la cochera
 
-// --- HC-SR04 (5 V). El ECHO necesita divisor de voltaje a 3.3 V ---
+// --- HC-SR04 de la caseta (5 V). El ECHO necesita divisor de voltaje a 3.3 V ---
 constexpr uint8_t GATE_TRIG = 25;  // detección del vehículo en la caseta
 constexpr uint8_t GATE_ECHO = 34;  // solo entrada
-constexpr uint8_t PRESENCE_TRIG = 26;
-constexpr uint8_t PRESENCE_ECHO = 35;  // solo entrada
+// --- Presencia: PIR HC-SR501 (VCC 5 V, salida a 3.3 V) ---
+constexpr uint8_t PRESENCE_PIR = 26;
 
 // --- Cocina ---
 constexpr uint8_t DHT_DATA = 4;  // (no llamarlo DHT11 ni DHT22: son macros de la librería DHT)
@@ -84,8 +97,8 @@ constexpr uint8_t MQ2_AO = 32;  // ADC1 (el ADC2 no funciona con WiFi activo); c
 constexpr uint8_t KITCHEN_ALERT_LED = 22;
 
 // --- RX480E (433 MHz), salidas a 5 V: divisor de voltaje ---
-constexpr uint8_t RF_OPEN = 36;   // D0, solo entrada
-constexpr uint8_t RF_CLOSE = 39;  // D1, solo entrada
+constexpr uint8_t RF_OPEN = 36;   // D0 (botón A): alterna abrir/cerrar; solo entrada
+constexpr uint8_t RF_CLOSE = 39;  // D1 (botón B): también alterna; solo entrada
 
 // --- Registro de desplazamiento 74HC595 (alimentado a 3.3 V) ---
 constexpr uint8_t SR_DATA = 16;   // SER

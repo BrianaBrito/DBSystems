@@ -9,16 +9,17 @@ portón de cochera por radiofrecuencia y registro de entradas en base de datos.
 
 ## Funcionalidades
 
+Guía para encender todo y resolver problemas comunes: [docs/puesta-en-marcha.md](docs/puesta-en-marcha.md).
+
 | Módulo | Qué hace | Hardware | Estado |
 |---|---|---|---|
-| Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
-| Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☑ |
-| Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☑ |
-| Cocina | Alerta (LED y buzzer) por temperatura alta o gas | KY-015 (DHT11), MQ2, LED, buzzer | ☑ |
-| Luces | Control de LEDs de recámaras desde la web; LED de presencia | 74HC595, sensor de presencia | ☐ |
-| Cochera | Abre y cierra el portón con control remoto de 433 MHz | RX480E + control Sonoff, servo | ☐ |
-| Panel web | Página servida por el ESP32 para controlar y consultar | LittleFS | ☐ |
-
+| | Base | WiFi AP+STA, API `/api/status`, registro por serie | ESP32 | ☑ |
+| Caseta | Abre con tarjeta RFID autorizada y cierra al pasar el vehículo; registra entradas | RC522, servo, HC-SR04 | ☑ ([docs](docs/caseta.md)) |
+| Registro de entradas | Historial de accesos en base de datos (backend PHP) | Laptop con PHP + SQLite | ☑ ([docs](backend/README.md)) |
+| Cocina | Alerta (LED y buzzer) por temperatura alta o gas | KY-015 (DHT11), MQ2, LED, buzzer | ☑ ([docs](docs/cocina.md)) |
+| Luces | Control de LEDs de recámaras desde la web; LED de presencia | 74HC595, PIR HC-SR501 | ☑ ([docs](docs/luces.md)) |
+| Cochera | Abre y cierra un portón de una hoja con control remoto de 433 MHz | RX480E + control Sonoff, 1 servo | ☑ ([docs](docs/cochera.md)) |
+| Panel web | Página servida por el ESP32 para controlar y consultar todos los módulos | LittleFS | ☐ |
 ## Arquitectura
 
 ```
@@ -59,9 +60,14 @@ Decisiones de diseño:
 ├── lib/
 │   ├── Common/               IModule, Logger, StatusLed
 │   ├── WifiManager/          modo dual AP+STA
-│   └── ApiServer/            servidor HTTP/JSON y autenticación
+│   ├── ApiServer/            servidor HTTP/JSON, autenticación y panel web
+│   ├── *Logic/               lógica pura con pruebas (Gate, Kitchen, Lights, Garage, Presence)
+│   └── *Module/              un módulo por funcionalidad (Gate, Kitchen, Lights, Garage)
+├── data/index.html           panel web (se sube a LittleFS)
+├── backend/                  PHP + SQLite: registro de entradas
+├── test/test_logic/          pruebas unitarias (Unity)
 ├── src/main.cpp              ensambla los componentes
-├── docs/                     pines.md, api.md
+├── docs/                     pines, API, puesta en marcha, pruebas y un documento por módulo
 └── platformio.ini
 ```
 
@@ -73,11 +79,15 @@ Requisitos: Visual Studio Code con la extensión PlatformIO y un ESP32 DOIT DevK
 2. Copia `include/secrets.h.example` como `include/secrets.h` y completa tus datos
    (red WiFi, contraseña del AP, token de la API).
 3. Compila y sube con los botones de PlatformIO (✓ y →), o con `pio run -t upload`.
-4. Abre el monitor serial a 115200 baudios y verifica la IP.
-5. Prueba: `curl http://192.168.4.1/api/status` conectada al AP, o con la IP del router.
+4. Sube el panel web: en PlatformIO, *Platform → Upload Filesystem Image*
+   (o `pio run -t uploadfs`). Cierra antes el monitor serie.
+5. Abre el monitor serial a 115200 baudios y verifica la IP.
+6. Abre `http://192.168.4.1` conectada al AP (o la IP del router) para ver el panel, o
+   prueba la API: `curl http://192.168.4.1/api/status`.
 
-El cableado está en [`docs/pines.md`](docs/pines.md) y los endpoints en
-[`docs/api.md`](docs/api.md).
+El cableado está en [`docs/pines.md`](docs/pines.md), los endpoints en
+[`docs/api.md`](docs/api.md) y la lista de pruebas de hardware en
+[`docs/pruebas.md`](docs/pruebas.md).
 
 ## Flujo de trabajo
 

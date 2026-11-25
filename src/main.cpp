@@ -13,8 +13,10 @@
 #include <ArduinoJson.h>
 #include <BackendClient.h>
 #include <Buzzer.h>
+#include <GarageModule.h>
 #include <GateModule.h>
 #include <KitchenModule.h>
+#include <LightsModule.h>
 #include <Logger.h>
 #include <StatusLed.h>
 #include <WifiManager.h>
@@ -83,6 +85,32 @@ KitchenModuleConfig makeKitchenConfig() {
   return c;
 }
 
+GarageModuleConfig makeGarageConfig() {
+  GarageModuleConfig c;
+  c.rfPin = pins::RF_OPEN;
+  c.rfPin2 = pins::RF_CLOSE;
+  c.servoPin = pins::SERVO_GARAGE;
+  c.closedDeg = cfg::GARAGE_CLOSED_DEG;
+  c.openDeg = cfg::GARAGE_OPEN_DEG;
+  c.travelMs = cfg::GARAGE_TRAVEL_MS;
+  c.debounceMs = cfg::GARAGE_RF_DEBOUNCE_MS;
+  c.lockMs = cfg::GARAGE_RF_LOCK_MS;
+  c.servoIntervalMs = cfg::GARAGE_SERVO_INTERVAL_MS;
+  return c;
+}
+
+LightsModuleConfig makeLightsConfig() {
+  LightsModuleConfig c;
+  c.dataPin = pins::SR_DATA;
+  c.clockPin = pins::SR_CLOCK;
+  c.latchPin = pins::SR_LATCH;
+  c.pirPin = pins::PRESENCE_PIR;
+  c.pirWarmupMs = cfg::PIR_WARMUP_MS;
+  c.holdMs = cfg::PRESENCE_HOLD_MS;
+  c.pirIntervalMs = cfg::PIR_INTERVAL_MS;
+  return c;
+}
+
 BackendClientConfig makeBackendConfig() {
   BackendClientConfig c;
 #ifdef BACKEND_URL
@@ -107,6 +135,8 @@ StatusLed statusLed(pins::STATUS_LED);
 Buzzer buzzer(pins::BUZZER);
 GateModule gate(makeGateConfig(), buzzer);
 KitchenModule kitchen(makeKitchenConfig(), buzzer);
+LightsModule lights(makeLightsConfig());
+GarageModule garage(makeGarageConfig());
 BackendClient backend(makeBackendConfig());
 
 }  // namespace
@@ -153,6 +183,10 @@ void setup() {
   gate.begin();
   api.addModule(&kitchen);
   kitchen.begin();
+  api.addModule(&lights);
+  lights.begin();
+  api.addModule(&garage);
+  garage.begin();
 
   wifi.begin();
   api.begin();
@@ -165,6 +199,8 @@ void loop() {
   buzzer.update(now);
   gate.update(now);
   kitchen.update(now);
+  lights.update(now);
+  garage.update(now);
 
   if (!wifi.isStaConfigured()) {
     statusLed.setPattern(StatusLed::BlinkSlow);  // solo AP
