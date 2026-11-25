@@ -29,6 +29,8 @@ Con todo conectado, el ESP32 encendido y el panel abierto en `http://192.168.4.1
 | 10 | Cochera | *Abrir portón* y *Cerrar portón* | El servo recorre 0° a 90° en ~2 s |
 | 11 | Cochera | Pulsar el botón del control remoto | Alterna abrir y cerrar; el panel muestra *control remoto* |
 | 12 | Todo | Mover el portón con la API y luego con el control | Cada pulsación del control invierte el estado actual |
-| 13 | Backend | Apagar el backend y pasar una tarjeta | El portón funciona igual; revisa si los eventos se reenvían al volver el backend |
+| 13 | Panel | Pasar una tarjeta registrada y otra no | En *Registro de entradas* aparecen *Acceso permitido* y *Acceso denegado* con su UID |
+| 14 | Panel | Pulsar *Ver bitácora completa* | Pide la dirección del servidor la primera vez y abre la bitácora de la laptop |
+| 15 | Backend | Apagar el backend y pasar una tarjeta | El portón funciona igual; revisa si los eventos se reenvían al volver el backend |
 
 Anota aquí cualquier ajuste (ángulos del servo, umbral de gas) para reproducirlo.

@@ -5,114 +5,252 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Casa Inteligente</title>
 <style>
-  :root{--bg:#0f1720;--card:#18232f;--line:#27384a;--tx:#e8eef5;--mut:#8aa0b5;--ok:#3ddc97;--warn:#ffb020;--bad:#ff5d5d;--acc:#4da3ff}
+  :root{
+    --pink:#f9b8c4; --pink-soft:#f8cdd5; --cream:#fcf5ea; --peach:#f7dfcf; --blue:#c3d9f0;
+    --red:#d6261c; --red-dark:#b51d15; --ink:#2b1b19; --mut:#8c716b; --line:#ecd9cf;
+    --serif:"Playfair Display","DM Serif Display",Didot,"Bodoni 72",Georgia,"Times New Roman",serif;
+    --sans:Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--tx)}
-  header{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-bottom:1px solid var(--line)}
-  h1{font-size:1.15rem;margin:0}
-  .pill{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;background:var(--line);color:var(--mut)}
-  .pill.ok{background:#12382a;color:var(--ok)} .pill.warn{background:#3d2e0c;color:var(--warn)} .pill.bad{background:#401818;color:var(--bad)}
-  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1rem;padding:1rem;max-width:1200px;margin:auto}
-  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem}
-  section h2{font-size:1rem;margin:0 0 .7rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
-  dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.25rem .8rem;font-size:.9rem}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--pink);font-family:var(--sans);color:var(--ink);padding:clamp(.5rem,2vw,1.6rem)}
+  .shell{max-width:1180px;margin:auto;background:var(--cream);border-radius:28px;padding:1rem clamp(.8rem,2.2vw,1.6rem) 2rem}
+
+  /* Encabezado */
+  .top{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:space-between;padding:.3rem .2rem 1rem}
+  .brand{display:flex;align-items:center;gap:.7rem}
+  .logo{width:44px;height:44px;border-radius:50%;background:var(--red);display:grid;place-items:center;flex:none}
+  .brand b{font-family:var(--serif);letter-spacing:.14em;font-size:1.1rem;font-weight:700}
+  .brand small{display:block;font-size:.56rem;letter-spacing:.32em;color:var(--mut);margin-top:.15rem}
+  nav{display:flex;flex-wrap:wrap;gap:.2rem .3rem}
+  nav a{font-size:.84rem;color:var(--ink);text-decoration:none;padding:.3rem .1rem;margin:0 .6rem;border-bottom:2px solid transparent}
+  nav a:hover{border-color:var(--red)}
+  .tools{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .chip{display:inline-block;font-size:.72rem;padding:.2rem .65rem;border-radius:999px;background:rgba(255,255,255,.75);color:var(--ink);white-space:nowrap}
+  .chip.ok{background:#d6f1e4;color:#0f6b46} .chip.warn{background:#ffe3a8;color:#7a5200} .chip.bad{background:#ffd0cc;color:#a1150d}
+  .top .chip{background:#f1e4d8}
+  .top .chip.ok{background:#d6f1e4} .top .chip.bad{background:#ffd0cc}
+
+  /* Botones */
+  .btn{display:inline-flex;align-items:center;gap:.4rem;font:inherit;font-size:.86rem;border-radius:999px;padding:.55rem 1.05rem;border:1.5px solid var(--red);cursor:pointer;text-decoration:none;line-height:1.1}
+  .btn.fill{background:var(--red);color:#fff} .btn.fill:hover{background:var(--red-dark);border-color:var(--red-dark)}
+  .btn.line{background:transparent;color:var(--red)} .btn.line:hover{background:#fbe3dd}
+  .btn.sm{padding:.42rem .85rem;font-size:.8rem}
+  .btn.on{background:var(--red);color:#fff}
+  .btn:active{transform:translateY(1px)}
+
+  /* Portada */
+  .hero{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .hero-l{background:var(--pink-soft);border-radius:22px;padding:clamp(1.2rem,3vw,2.2rem);position:relative;display:flex;flex-direction:column;justify-content:center;min-height:270px}
+  h1{font-family:var(--serif);color:var(--red);font-size:clamp(2.3rem,6vw,3.7rem);line-height:.98;margin:0 0 1rem;font-weight:700;letter-spacing:-.02em}
+  .hero-l p{margin:0 0 1.4rem;font-size:1.05rem;line-height:1.35;max-width:22rem}
+  .spark{position:absolute;right:1.6rem;top:1.4rem;color:var(--red);font-size:1.7rem}
+  .dots{position:absolute;right:1.8rem;bottom:1.5rem;display:grid;grid-template-columns:repeat(3,5px);gap:6px}
+  .dots i{width:4px;height:4px;border-radius:50%;background:var(--red)}
+  .hero-r{border-radius:22px;overflow:hidden;background:#f6d3c3;min-height:270px}
+  .hero-r svg{display:block;width:100%;height:100%}
+
+  /* Títulos de sección */
+  h2.sec{font-family:var(--serif);color:var(--red);font-size:1.75rem;font-weight:700;display:flex;align-items:center;gap:.55rem;margin:2rem 0 1rem}
+  h2.sec::before{content:"✦";font-size:1.05rem}
+
+  /* Tarjetas de módulos */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:1rem}
+  .mc{border-radius:22px;padding:1rem 1.05rem 1.15rem;display:flex;flex-direction:column;gap:.65rem}
+  .t-pink{background:var(--pink-soft)} .t-blue{background:var(--blue)} .t-peach{background:var(--peach)}
+  .t-white{background:#fff;border:1px solid var(--line);grid-column:1/-1}
+  .t-white dl{grid-template-columns:auto 1fr auto 1fr auto 1fr auto 1fr;gap:.35rem .8rem}
+  .t-white dd{text-align:left;margin-right:1rem}
+  @media(max-width:900px){.t-white dl{grid-template-columns:auto 1fr}.t-white dd{text-align:right;margin-right:0}}
+  .mc-h{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  .mc h3{font-family:var(--serif);font-size:1.4rem;margin:0;font-weight:700}
+  .big{font-family:var(--serif);font-size:2.7rem;line-height:1;color:var(--red);font-weight:700}
+  .big small{font-family:var(--sans);font-size:.95rem;color:var(--mut);margin-left:.3rem;font-weight:400}
+  dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.28rem .8rem;font-size:.88rem}
   dt{color:var(--mut)} dd{margin:0;text-align:right}
-  .row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
-  button{font:inherit;font-size:.88rem;color:var(--tx);background:#22334a;border:1px solid var(--line);border-radius:8px;padding:.5rem .8rem;cursor:pointer}
-  button:hover{border-color:var(--acc)} button:active{background:#2c4466}
-  button.on{background:#12382a;border-color:var(--ok);color:var(--ok)}
-  button.danger{border-color:#5a2a2a}
-  .rooms{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-top:.6rem}
-  .rooms button{padding:.6rem 0;text-align:center}
-  .bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:.6rem}
-  .bar>i{display:block;height:100%;background:var(--acc);width:0;transition:width .3s}
-  .alert{background:#401818;border:1px solid var(--bad);color:#ffd0d0;padding:.5rem .7rem;border-radius:8px;margin-top:.7rem;font-size:.9rem}
+  .row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:auto;padding-top:.3rem}
+  .alert{background:#fff;border:1.5px solid var(--red);color:var(--red-dark);padding:.45rem .7rem;border-radius:12px;font-size:.88rem}
   .hide{display:none!important}
-  #toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:#22334a;border:1px solid var(--line);padding:.6rem 1rem;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw}
-  #toast.show{opacity:1} #toast.err{border-color:var(--bad)}
-  input{font:inherit;background:#0f1720;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;width:11rem}
+  .bar{height:8px;background:rgba(255,255,255,.7);border-radius:6px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:var(--red);width:0;transition:width .3s}
+  .rooms{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem}
+  .rooms button{font:inherit;font-size:.85rem;padding:.65rem 0;border-radius:14px;border:1.5px solid var(--red);background:rgba(255,255,255,.6);color:var(--red);cursor:pointer}
+  .rooms button.on{background:var(--red);color:#fff}
+
+  /* Registro de entradas */
+  .log{margin-top:2rem;display:grid;grid-template-columns:minmax(230px,1fr) 2fr;gap:1.4rem;align-items:start}
+  .log-l h2{margin-top:.2rem}
+  .log-l p{font-size:.95rem;line-height:1.45;color:#5b4540;margin:0 0 1.1rem}
+  .log-l small{display:block;margin-top:.7rem;color:var(--mut)}
+  .log-l small a{color:var(--red);cursor:pointer;text-decoration:underline}
+  .list{background:#fff;border:1px solid var(--line);border-radius:22px;padding:.4rem .9rem;min-height:120px}
+  .ev{display:grid;grid-template-columns:auto 1fr auto;gap:.2rem .8rem;align-items:center;padding:.65rem 0;border-bottom:1px solid #f4e8df}
+  .ev:last-child{border-bottom:0}
+  .ev .uid{font-family:ui-monospace,Consolas,monospace;font-size:.85rem}
+  .ev .when{font-size:.78rem;color:var(--mut);text-align:right}
+  .ev .dot{width:10px;height:10px;border-radius:50%;background:var(--mut)}
+  .ev.granted .dot{background:#1f9d6b} .ev.denied .dot{background:var(--red)}
+  .empty{padding:1.4rem .4rem;color:var(--mut);font-size:.92rem;text-align:center}
+  .empty .btn{margin-top:.8rem}
+
+  #toast{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.6rem 1.1rem;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;font-size:.9rem;z-index:9}
+  #toast.show{opacity:1} #toast.err{background:var(--red)}
+
+  @media(max-width:780px){
+    .hero,.log{grid-template-columns:1fr}
+    .hero-r{min-height:230px}
+    nav{order:3;width:100%}
+    nav a{margin:0 .5rem 0 0}
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>🏠 Casa Inteligente</h1>
-  <div>
-    <span id="conn" class="pill">conectando…</span>
-    <span id="fw" class="pill"></span>
-    <span id="upt" class="pill"></span>
-    <button id="tokbtn">Token</button>
+<div class="shell">
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>
+    </div>
+    <div><b>CASA INTELIGENTE</b><small>CONTROL DEL HOGAR</small></div>
+  </div>
+  <nav>
+    <a href="#caseta">Caseta</a><a href="#cocina">Cocina</a><a href="#luces">Luces</a><a href="#cochera">Cochera</a><a href="#registro">Registro</a>
+  </nav>
+  <div class="tools">
+    <span id="conn" class="chip">conectando…</span>
+    <span id="fw" class="chip"></span>
+    <span id="upt" class="chip"></span>
+    <button id="tokbtn" class="btn line sm">Token</button>
   </div>
 </header>
-<main>
-  <section id="s-gate"><h2>Caseta <span class="pill" id="gate-state"></span></h2>
+
+<section class="hero">
+  <div class="hero-l">
+    <span class="spark">✦</span>
+    <h1>Tu casa,<br>a un toque.</h1>
+    <p>Estado y control de la caseta, la cocina, las luces y la cochera en un solo lugar.</p>
+    <div><a class="btn fill" href="#modulos">Ver módulos <span>→</span></a></div>
+    <div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <div class="hero-r">
+    <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Casa con sus luces, portón y caseta">
+      <rect width="400" height="300" fill="#f6d3c3"/>
+      <path d="M310 300V122a40 40 0 0 1 80 0V300Z" fill="#d6261c" opacity=".92"/>
+      <path d="M0 236H400V300H0Z" fill="#eab9a6"/>
+      <path d="M60 64l4.5 11 11 4.5-11 4.5L60 95l-4.5-11-11-4.5 11-4.5Z" fill="#d6261c"/>
+      <!-- casa -->
+      <path d="M80 120 200 40 320 120Z" fill="#d6261c" stroke="#d6261c" stroke-width="10" stroke-linejoin="round"/>
+      <rect x="95" y="116" width="210" height="130" rx="10" fill="#fcf5ea"/>
+      <rect id="w1" x="110" y="132" width="44" height="36" rx="7" fill="#b9d3ee"/>
+      <rect id="w2" x="175" y="132" width="44" height="36" rx="7" fill="#b9d3ee"/>
+      <rect id="w3" x="240" y="132" width="44" height="36" rx="7" fill="#b9d3ee"/>
+      <rect id="w4" x="110" y="186" width="44" height="36" rx="7" fill="#b9d3ee"/>
+      <rect id="w5" x="175" y="186" width="44" height="36" rx="7" fill="#b9d3ee"/>
+      <!-- cochera -->
+      <rect x="240" y="182" width="46" height="64" rx="3" fill="#e7d5c2"/>
+      <rect id="gdoor" x="240" y="182" width="46" height="64" rx="3" fill="#d6261c"/>
+      <!-- caseta -->
+      <rect x="10" y="200" width="30" height="46" rx="4" fill="#fcf5ea"/>
+      <path d="M5 204H45L25 184Z" fill="#d6261c"/>
+      <g id="garm" transform="rotate(0 40 218)">
+        <rect x="40" y="215" width="44" height="6" rx="3" fill="#d6261c"/>
+        <rect x="54" y="215" width="7" height="6" fill="#fcf5ea"/><rect x="68" y="215" width="7" height="6" fill="#fcf5ea"/>
+      </g>
+      <!-- alerta de cocina -->
+      <g id="alertdot" style="display:none"><circle cx="200" cy="92" r="15" fill="#fcf5ea"/><text x="200" y="99" text-anchor="middle" font-size="22" font-weight="700" fill="#d6261c" font-family="Georgia,serif">!</text></g>
+    </svg>
+  </div>
+</section>
+
+<h2 class="sec" id="modulos">Tus módulos</h2>
+<section class="grid">
+
+  <article class="mc t-pink" id="caseta">
+    <div class="mc-h"><h3>Caseta</h3><span class="chip" id="gate-state"></span></div>
     <dl>
       <dt>Vehículo presente</dt><dd id="gate-veh"></dd>
       <dt>Distancia</dt><dd id="gate-dist"></dd>
       <dt>Último cierre</dt><dd id="gate-reason"></dd>
       <dt>Lector RFID</dt><dd id="gate-rfid"></dd>
-      <dt>Tarjetas registradas</dt><dd id="gate-cards"></dd>
+      <dt>Tarjetas</dt><dd id="gate-cards"></dd>
       <dt>Modo aprendizaje</dt><dd id="gate-learn"></dd>
     </dl>
     <div class="row">
-      <button data-post="/api/gate/open">Abrir barra</button>
-      <button data-post="/api/gate/close">Cerrar barra</button>
-      <button data-post="/api/gate/learn">Registrar tarjeta</button>
+      <button class="btn fill sm" data-post="/api/gate/open">Abrir barra</button>
+      <button class="btn line sm" data-post="/api/gate/close">Cerrar barra</button>
+      <button class="btn line sm" data-post="/api/gate/learn">Registrar tarjeta</button>
     </div>
-  </section>
+  </article>
 
-  <section id="s-kitchen"><h2>Cocina <span class="pill" id="k-phase"></span></h2>
+  <article class="mc t-blue" id="cocina">
+    <div class="mc-h"><h3>Cocina</h3><span class="chip" id="k-phase"></span></div>
+    <div class="big"><span id="k-temp-big">—</span><small>°C</small></div>
     <div id="k-alert" class="alert hide"></div>
     <dl>
-      <dt>Temperatura</dt><dd id="k-temp"></dd>
       <dt>Humedad</dt><dd id="k-hum"></dd>
       <dt>Gas (lectura / umbral)</dt><dd id="k-gas"></dd>
       <dt>Línea base de gas</dt><dd id="k-base"></dd>
+      <dt>Temperatura máxima</dt><dd id="k-max"></dd>
       <dt>Alarma silenciada</dt><dd id="k-sil"></dd>
     </dl>
     <div class="bar"><i id="k-bar"></i></div>
     <div class="row">
-      <button data-post="/api/kitchen/silence">Silenciar</button>
-      <button data-post="/api/kitchen/calibrate" data-confirm="Hazlo con aire limpio. ¿Recalibrar el gas?">Recalibrar gas</button>
+      <button class="btn fill sm" data-post="/api/kitchen/silence">Silenciar</button>
+      <button class="btn line sm" data-post="/api/kitchen/calibrate" data-confirm="Hazlo con aire limpio. ¿Recalibrar el gas?">Recalibrar gas</button>
     </div>
-  </section>
+  </article>
 
-  <section id="s-lights"><h2>Luces <span class="pill" id="l-pres"></span></h2>
+  <article class="mc t-peach" id="luces">
+    <div class="mc-h"><h3>Luces</h3><span class="chip" id="l-pres"></span></div>
     <div class="rooms" id="rooms"></div>
-    <div class="row">
-      <button data-post="/api/lights/all?state=on">Encender todas</button>
-      <button data-post="/api/lights/all?state=off">Apagar todas</button>
-    </div>
-    <dl style="margin-top:.8rem">
+    <dl>
       <dt>Movimiento (PIR)</dt><dd id="l-motion"></dd>
       <dt>Sensor PIR</dt><dd id="l-ready"></dd>
     </dl>
     <div class="row">
-      <button id="l-ptoggle">LED de presencia</button>
+      <button class="btn fill sm" data-post="/api/lights/all?state=on">Encender todas</button>
+      <button class="btn line sm" data-post="/api/lights/all?state=off">Apagar todas</button>
+      <button class="btn line sm" id="l-ptoggle">LED de presencia</button>
     </div>
-  </section>
+  </article>
 
-  <section id="s-garage"><h2>Cochera <span class="pill" id="g-state"></span></h2>
+  <article class="mc t-pink" id="cochera">
+    <div class="mc-h"><h3>Cochera</h3><span class="chip" id="g-state"></span></div>
+    <div class="big"><span id="g-pos-big">0</span><small>% abierto</small></div>
+    <div class="bar"><i id="g-bar"></i></div>
     <dl>
-      <dt>Posición</dt><dd id="g-pos"></dd>
       <dt>Ángulo del servo</dt><dd id="g-deg"></dd>
       <dt>Última orden</dt><dd id="g-last"></dd>
     </dl>
-    <div class="bar"><i id="g-bar"></i></div>
     <div class="row">
-      <button data-post="/api/garage/open">Abrir portón</button>
-      <button data-post="/api/garage/close">Cerrar portón</button>
+      <button class="btn fill sm" data-post="/api/garage/open">Abrir portón</button>
+      <button class="btn line sm" data-post="/api/garage/close">Cerrar portón</button>
     </div>
-  </section>
+  </article>
 
-  <section id="s-sys"><h2>Sistema</h2>
+  <article class="mc t-white" id="sistema">
+    <div class="mc-h"><h3>Sistema</h3></div>
     <dl>
       <dt>Red propia (AP)</dt><dd id="w-ap"></dd>
       <dt>Clientes en el AP</dt><dd id="w-cli"></dd>
       <dt>Red externa (STA)</dt><dd id="w-sta"></dd>
       <dt>Memoria libre</dt><dd id="w-heap"></dd>
     </dl>
-  </section>
-</main>
+  </article>
+</section>
+
+<section id="registro" class="log">
+  <div class="log-l">
+    <h2 class="sec">Registro de entradas</h2>
+    <p>Los últimos accesos a la caseta: tarjetas permitidas, rechazadas y aperturas manuales. La bitácora completa y permanente está en el servidor de la laptop.</p>
+    <button class="btn line" id="openlog">Ver bitácora completa <span>→</span></button>
+    <small>Servidor: <span id="backurl">sin configurar</span> · <a id="chgurl">cambiar</a></small>
+  </div>
+  <div class="list" id="loglist"><div class="empty">Cargando…</div></div>
+</section>
+
+</div>
 <div id="toast"></div>
 
 <script>
@@ -121,21 +259,23 @@
   var $ = function(id){ return document.getElementById(id); };
   var token = '';
   try { token = sessionStorage.getItem('token') || ''; } catch(e) {}
-  var last = null, fails = 0, toastTimer = null;
+  var last = null, fails = 0, toastTimer = null, logBusy = false;
 
   function toast(msg, err){
     var t = $('toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
-    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.className = ''; }, 2500);
+    clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.className = ''; }, 2600);
   }
   function setText(id, v){ $(id).textContent = v; }
   function yn(v){ return v ? 'sí' : 'no'; }
-  function pill(id, text, cls){ var e = $(id); e.textContent = text; e.className = 'pill ' + (cls || ''); }
+  function chip(id, text, cls){ var e = $(id); e.textContent = text; e.className = 'chip ' + (cls || ''); }
+  function clearToken(){ token = ''; try { sessionStorage.removeItem('token'); } catch(e) {} }
   function ask(force){
     if (!force && token) return true;
     var v = window.prompt('Token de la API (X-API-Token):', token);
     if (v === null) return false;
     token = v.trim();
     try { sessionStorage.setItem('token', token); } catch(e) {}
+    if (token) refreshLog();
     return !!token;
   }
 
@@ -143,10 +283,10 @@
     if (!ask(false)) return;
     fetch(path, { method: 'POST', headers: { 'X-API-Token': token } })
       .then(function(r){
-        if (r.status === 401) { token = ''; try { sessionStorage.removeItem('token'); } catch(e) {} throw new Error('Token incorrecto'); }
+        if (r.status === 401) { clearToken(); throw new Error('Token incorrecto'); }
         return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || ('Error ' + r.status)); return j; });
       })
-      .then(function(){ toast((label || 'Orden enviada') + ' ✔'); refresh(); })
+      .then(function(){ toast((label || 'Orden enviada') + ' ✔'); refresh(); setTimeout(refreshLog, 600); })
       .catch(function(e){ toast(e.message, true); });
   }
 
@@ -173,6 +313,82 @@
     post('/api/lights/presence?mode=' + (en ? 'off' : 'auto'), 'LED de presencia');
   });
 
+  /* ---- Bitácora completa (servidor PHP de la laptop) ---- */
+  function getBack(){ try { return localStorage.getItem('backend') || ''; } catch(e) { return ''; } }
+  function setBack(u){ try { localStorage.setItem('backend', u); } catch(e) {} showBack(); }
+  function showBack(){ setText('backurl', getBack() || 'sin configurar'); }
+  function askBack(){
+    var u = window.prompt('Dirección de la bitácora completa (la laptop), por ejemplo http://192.168.4.2:8000', getBack() || 'http://');
+    if (u === null) return '';
+    u = u.trim();
+    if (!u || u === 'http://') return '';
+    if (!/^https?:\/\//i.test(u)) u = 'http://' + u;
+    setBack(u); return u;
+  }
+  $('openlog').addEventListener('click', function(){
+    var u = getBack() || askBack();
+    if (u) window.open(u, '_blank', 'noopener');
+  });
+  $('chgurl').addEventListener('click', function(){ askBack(); });
+  showBack();
+
+  /* ---- Registro de entradas (bitácora del ESP32) ---- */
+  var resultInfo = {
+    granted:{ t:'Acceso permitido', c:'ok' }, denied:{ t:'Acceso denegado', c:'bad' },
+    learned:{ t:'Tarjeta registrada', c:'' }, already_registered:{ t:'Ya registrada', c:'' },
+    card_list_full:{ t:'Lista llena', c:'warn' }, manual_open:{ t:'Apertura manual', c:'' }
+  };
+  function fmtUid(u){ return String(u || '').toUpperCase().replace(/(..)(?=.)/g, '$1:'); }
+  function ago(sec){
+    if (sec < 0) sec = 0;
+    if (sec < 60) return 'hace ' + sec + ' s';
+    if (sec < 3600) return 'hace ' + Math.floor(sec / 60) + ' min';
+    return 'hace ' + Math.floor(sec / 3600) + ' h';
+  }
+  function logMessage(text, withButton){
+    var box = $('loglist'); box.textContent = '';
+    var d = document.createElement('div'); d.className = 'empty'; d.textContent = text;
+    if (withButton) {
+      d.appendChild(document.createElement('br'));
+      var b = document.createElement('button'); b.className = 'btn fill sm'; b.textContent = 'Introducir token';
+      b.addEventListener('click', function(){ ask(true); });
+      d.appendChild(b);
+    }
+    box.appendChild(d);
+  }
+  function renderLog(events, nowS){
+    if (!events.length) { logMessage('Aún no hay accesos desde el último encendido.', false); return; }
+    var box = $('loglist'); box.textContent = '';
+    events.forEach(function(e){
+      var info = resultInfo[e.result] || { t:e.result, c:'' };
+      var row = document.createElement('div'); row.className = 'ev ' + e.result;
+      var dot = document.createElement('span'); dot.className = 'dot';
+      var mid = document.createElement('div');
+      var uid = document.createElement('div'); uid.className = 'uid'; uid.textContent = e.uid ? fmtUid(e.uid) : '—';
+      var lab = document.createElement('span'); lab.className = 'chip ' + info.c; lab.textContent = info.t;
+      mid.appendChild(uid); mid.appendChild(lab);
+      var when = document.createElement('div'); when.className = 'when';
+      when.textContent = nowS != null ? ago(nowS - e.uptime_s) : '#' + e.seq;
+      row.appendChild(dot); row.appendChild(mid); row.appendChild(when);
+      box.appendChild(row);
+    });
+  }
+  function refreshLog(){
+    if (!token) { logMessage('Introduce el token para ver el registro de entradas.', true); return; }
+    if (logBusy) return;
+    logBusy = true;
+    fetch('/api/gate/log?limit=12', { headers: { 'X-API-Token': token }, cache: 'no-store' })
+      .then(function(r){
+        if (r.status === 401) { clearToken(); logMessage('Token incorrecto. Vuelve a introducirlo.', true); throw new Error('401'); }
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      })
+      .then(function(j){ renderLog(j.events || [], last ? last.uptime_s : null); })
+      .catch(function(){})
+      .then(function(){ logBusy = false; });
+  }
+
+  /* ---- Estado general ---- */
   function fmtUp(s){
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
     return h > 0 ? h + ' h ' + m + ' min' : m + ' min ' + (s % 60) + ' s';
@@ -180,24 +396,26 @@
   var gateNames = { closed:'cerrada', opening:'abriendo', waiting_vehicle:'esperando vehículo', vehicle_passing:'pasando vehículo', closing:'cerrando' };
   var garageNames = { closed:'cerrado', opening:'abriendo', open:'abierto', closing:'cerrando' };
   var phaseNames = { warming_up:'calentando', calibrating:'calibrando', ready:'listo' };
+  var reasonNames = { none:'—', vehicle_passed:'pasó el vehículo', timeout:'tiempo agotado', manual:'manual', unknown:'—' };
   var cmdNames = { remote:'control remoto', api:'API / panel', none:'ninguna' };
 
   function render(s){
     last = s;
-    pill('conn', 'en línea', 'ok');
+    chip('conn', 'en línea', 'ok');
     setText('fw', 'v' + s.firmware.version);
     setText('upt', fmtUp(s.uptime_s));
     var g = s.modules.gate, k = s.modules.kitchen, l = s.modules.lights, c = s.modules.garage;
 
-    pill('gate-state', gateNames[g.state] || g.state, g.state === 'closed' ? '' : 'warn');
+    chip('gate-state', gateNames[g.state] || g.state, g.state === 'closed' ? '' : 'warn');
     setText('gate-veh', yn(g.vehicle_present));
     setText('gate-dist', g.distance_cm == null || g.distance_cm < 0 ? '—' : Math.round(g.distance_cm) + ' cm');
-    setText('gate-reason', g.last_close_reason || '—');
+    setText('gate-reason', reasonNames[g.last_close_reason] || g.last_close_reason || '—');
     setText('gate-rfid', g.rfid_ok ? 'detectado' : 'no responde');
     setText('gate-cards', g.cards);
     setText('gate-learn', g.learn_mode ? 'activo' : 'no');
 
-    pill('k-phase', phaseNames[k.phase] || k.phase, k.phase === 'ready' ? 'ok' : 'warn');
+    chip('k-phase', phaseNames[k.phase] || k.phase, k.phase === 'ready' ? 'ok' : 'warn');
+    setText('k-temp-big', k.temperature_c == null ? '—' : k.temperature_c.toFixed(1));
     var al = $('k-alert');
     if (k.alert) {
       var why = [];
@@ -206,28 +424,35 @@
       al.textContent = '⚠ Alerta: ' + why.join(' y ');
       al.classList.remove('hide');
     } else al.classList.add('hide');
-    setText('k-temp', k.temperature_c == null ? '—' : k.temperature_c.toFixed(1) + ' °C (máx. ' + k.temp_max_c + ')');
     setText('k-hum', k.humidity == null ? '—' : k.humidity.toFixed(0) + ' %');
     setText('k-gas', k.gas_filtered + ' / ' + k.gas_threshold);
     setText('k-base', k.gas_baseline);
+    setText('k-max', k.temp_max_c + ' °C');
     setText('k-sil', yn(k.silenced));
     var pct = k.gas_threshold > 0 ? Math.min(100, 100 * k.gas_filtered / k.gas_threshold) : 0;
-    var bar = $('k-bar'); bar.style.width = pct + '%'; bar.style.background = k.gas_alert ? 'var(--bad)' : 'var(--acc)';
+    var bar = $('k-bar'); bar.style.width = pct + '%'; bar.style.background = k.gas_alert ? '#7a0f0a' : 'var(--red)';
 
     for (var i = 0; i < 5; i++) {
-      var b = $('room' + (i + 1)); b.className = l.rooms[i] ? 'on' : '';
+      $('room' + (i + 1)).className = l.rooms[i] ? 'on' : '';
+      $('w' + (i + 1)).setAttribute('fill', l.rooms[i] ? '#ffd25a' : '#b9d3ee');
     }
-    pill('l-pres', l.presence ? 'presencia' : 'sin presencia', l.presence ? 'ok' : '');
+    chip('l-pres', l.presence ? 'presencia' : 'sin presencia', l.presence ? 'ok' : '');
     setText('l-motion', yn(l.motion));
     setText('l-ready', l.pir_ready ? 'listo' : 'calentando');
     $('l-ptoggle').textContent = 'LED de presencia: ' + (l.presence_enabled ? 'automático' : 'apagado');
-    $('l-ptoggle').className = l.presence_enabled ? 'on' : '';
+    $('l-ptoggle').className = 'btn sm ' + (l.presence_enabled ? 'on' : 'line');
 
-    pill('g-state', garageNames[c.state] || c.state, c.state === 'closed' ? '' : 'warn');
-    setText('g-pos', c.position_pct + ' %');
+    chip('g-state', garageNames[c.state] || c.state, c.state === 'closed' ? '' : 'warn');
+    setText('g-pos-big', c.position_pct);
     setText('g-deg', c.deg + '°');
     setText('g-last', cmdNames[c.last_command] || c.last_command);
     $('g-bar').style.width = c.position_pct + '%';
+
+    // Ilustración
+    $('gdoor').setAttribute('width', Math.max(5, 46 * (1 - c.position_pct / 100)));
+    var gateOpen = g.state === 'opening' || g.state === 'waiting_vehicle' || g.state === 'vehicle_passing';
+    $('garm').setAttribute('transform', 'rotate(' + (gateOpen ? -70 : 0) + ' 40 218)');
+    $('alertdot').style.display = k.alert ? '' : 'none';
 
     var ap = s.wifi.ap, st = s.wifi.sta;
     setText('w-ap', ap.ssid + ' · ' + ap.ip);
@@ -240,10 +465,12 @@
     fetch('/api/status', { cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function(s){ fails = 0; render(s); })
-      .catch(function(){ if (++fails >= 2) pill('conn', 'sin conexión', 'bad'); });
+      .catch(function(){ if (++fails >= 2) chip('conn', 'sin conexión', 'bad'); });
   }
   refresh();
+  refreshLog();
   setInterval(function(){ if (!document.hidden) refresh(); }, 1500);
+  setInterval(function(){ if (!document.hidden) refreshLog(); }, 4000);
 })();
 </script>
 </body>
