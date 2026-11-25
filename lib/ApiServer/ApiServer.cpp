@@ -1,5 +1,6 @@
 #include "ApiServer.h"
 
+#include <LittleFS.h>
 #include <Logger.h>
 
 namespace {
@@ -35,6 +36,18 @@ void ApiServer::begin() {
 
   for (size_t i = 0; i < modules_.size(); i++) {
     modules_[i]->registerRoutes(*this);
+  }
+
+  // Panel web: los archivos de la carpeta data/ (se suben con "Upload Filesystem Image").
+  // Se registra después de las rutas /api para que estas tengan prioridad.
+  if (LittleFS.exists("/index.html")) {
+    server_.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  } else {
+    LOG_W(TAG, "No hay /index.html en LittleFS: sube el sistema de archivos para ver el panel");
+    server_.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+      request->send(200, "text/plain; charset=utf-8",
+                    "Panel no instalado. En PlatformIO: Upload Filesystem Image. La API sigue en /api/status.");
+    });
   }
 
   server_.onNotFound(
